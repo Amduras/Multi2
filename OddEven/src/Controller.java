@@ -73,15 +73,11 @@ public class Controller {
 	}
 
 	private static boolean checkNumbers(Integer[] sorted) {
-		boolean numbers = true;
-		int i = 0;
-		while (numbers && i < unsorted.length) {
-			if (unsorted[i] != sorted[i]) {
-				numbers = false;
-			}
-			++i;
+		if (sorted.length == unsorted.length) {
+			return true;
+		} else {
+			return false;
 		}
-		return numbers;
 	}
 
 	private static boolean checkSort(Integer[] sorted) {
