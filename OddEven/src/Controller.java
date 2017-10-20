@@ -1,52 +1,98 @@
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 
 public class Controller {
 
-	// private static Integer[] zahlen = new Integer[4];
-	private static int[] zahlen = new int[20];
-	private static int maxThreads = zahlen.length / 2;
+	// private static Integer[] unsorted = { 7, 5, 3, 6, 2, 4, 1, 0 };
+	private static Integer[] unsorted = new Integer[20];
+	private static int maxThreads = 4;
+	private static Integer[] digits;
 	private static CyclicBarrier barrier = new CyclicBarrier(maxThreads);
 	private static MyThread[] threads = new MyThread[maxThreads];;
 	private static CountDownLatch doneSignal = new CountDownLatch(maxThreads);
+	private static boolean bubble = false;
 
 	public static void main(String[] args) {
-		Random rnd = new Random(42);
-		for (int i = 0; i < zahlen.length; ++i) {
-			zahlen[i] = rnd.nextInt(1 << 16);
-			System.out.print(zahlen[i] + " ");
+		Random rnd = new Random(5);
+		for (int i = 0; i < unsorted.length; ++i) {
+			unsorted[i] = rnd.nextInt(1 << 16);
+			System.out.print(unsorted[i] + " ");
 		}
 		System.out.println("\n");
-		if (zahlen.length % maxThreads == 0) {
-			for (int i = 0; i < zahlen.length; i = i + 2) {
-				threads[i / 2] = new MyThread(zahlen[i], zahlen[i + 1], barrier, maxThreads, i / 2, doneSignal);
+		if (unsorted.length % maxThreads == 0) {
+			digits = new Integer[unsorted.length / maxThreads];
+			for (int i = 0; i < threads.length; ++i) {
+				System.arraycopy(unsorted, (i * unsorted.length / maxThreads), digits, 0, digits.length);
+				threads[i] = new MyThread(digits, barrier, maxThreads, i, doneSignal, bubble);
 
 			}
+			final Long start = System.nanoTime();
 			for (int i = 0; i < maxThreads; ++i) {
 				if (i < threads.length - 1) {
 					threads[i].setNext(threads[i + 1]);
 				}
 				new Thread(threads[i]).start();
 			}
+
+			try {
+				doneSignal.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			final Long end = System.nanoTime();
+			Integer[] sorted = new Integer[unsorted.length];
+			Integer[] test;
+			System.out.println("\nNach dem Sortieren:\n");
+			for (int i = 0; i < threads.length; ++i) {
+				System.arraycopy(threads[i].getDigits(), 0, sorted, i * threads[i].getDigits().length,
+						threads[i].getDigits().length);
+			}
+			for (int i = 0; i < sorted.length; ++i) {
+				System.out.print(sorted[i] + " ");
+			}
+			System.out.println("\n------------------------");
+			System.out.println("\nBenötigte Zeit in ms: \t" + (end - start) / 1000000.0);
+			System.out.println("\nLänge vorher: " + unsorted.length + "\tLänge nachher: " + sorted.length);
+			Arrays.sort(unsorted);
+			if (checkNumbers(sorted)) {
+				System.out.println("\nAlle Zahlen vorhanden");
+				if (checkSort(sorted)) {
+					System.out.println("\nZahlen sind sortiert");
+				} else {
+					System.out.println("\nZahlen sind nicht sortier");
+				}
+			} else {
+				System.out.println("Ein böser Hobbit hat zahlen geklaut!");
+			}
+
 		} else {
 			System.out.printf("Zahlen lassen sich nicht aufteilen");
 		}
-
-		try {
-			doneSignal.await();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		int[] sorted = new int[zahlen.length];
-		System.out.println("\nNach dem Sortieren:\n");
-		for (int i = 0; i < sorted.length; i = i + 2) {
-			sorted[i] = threads[i / 2].getLeft();
-			sorted[i + 1] = threads[i / 2].getRight();
-		}
-		for (int i = 0; i < sorted.length; ++i) {
-			System.out.print(sorted[i] + " ");
-		}
 	}
 
+	private static boolean checkNumbers(Integer[] sorted) {
+		boolean numbers = true;
+		int i = 0;
+		while (numbers && i < unsorted.length) {
+			if (unsorted[i] != sorted[i]) {
+				numbers = false;
+			}
+			++i;
+		}
+		return numbers;
+	}
+
+	private static boolean checkSort(Integer[] sorted) {
+		boolean sort = true;
+		int i = 0;
+		while (sort && i < sorted.length - 1) {
+			if (sorted[i] > sorted[i + 1]) {
+				sort = false;
+			}
+			++i;
+		}
+		return sort;
+	}
 }
