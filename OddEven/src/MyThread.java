@@ -26,7 +26,6 @@ public class MyThread implements Runnable {
 		this.digits = new Integer[digits.length];
 		System.arraycopy(digits, 0, this.digits, 0, digits.length);
 		this.bubble = bubble;
-		firstSort();
 	}
 
 	private void firstSort() {
@@ -44,10 +43,12 @@ public class MyThread implements Runnable {
 				}
 			}
 		}
+		System.out.println("\nKern: " + myId + " fertig vorsortiert");
 	}
 
 	@Override
 	public void run() {
+		firstSort();
 		try {
 			barrier.await();
 		} catch (InterruptedException | BrokenBarrierException e1) {

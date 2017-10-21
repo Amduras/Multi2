@@ -6,7 +6,7 @@ import java.util.concurrent.CyclicBarrier;
 public class Controller {
 
 	// private static Integer[] unsorted = { 7, 5, 3, 6, 2, 4, 1, 0 };
-	private static Integer[] unsorted = new Integer[20];
+	private static Integer[] unsorted = new Integer[200000];
 	private static int maxThreads = 4;
 	private static Integer[] digits;
 	private static CyclicBarrier barrier = new CyclicBarrier(maxThreads);
@@ -15,10 +15,10 @@ public class Controller {
 	private static boolean bubble = false;
 
 	public static void main(String[] args) {
-		Random rnd = new Random(5);
+		Random rnd = new Random(42);
 		for (int i = 0; i < unsorted.length; ++i) {
 			unsorted[i] = rnd.nextInt(1 << 16);
-			System.out.print(unsorted[i] + " ");
+			// System.out.print(unsorted[i] + " ");
 		}
 		System.out.println("\n");
 		if (unsorted.length % maxThreads == 0) {
@@ -28,11 +28,14 @@ public class Controller {
 				threads[i] = new MyThread(digits, barrier, maxThreads, i, doneSignal, bubble);
 
 			}
-			final Long start = System.nanoTime();
 			for (int i = 0; i < maxThreads; ++i) {
 				if (i < threads.length - 1) {
 					threads[i].setNext(threads[i + 1]);
 				}
+			}
+
+			final Long start = System.nanoTime();
+			for (int i = 0; i < maxThreads; ++i) {
 				new Thread(threads[i]).start();
 			}
 
@@ -49,11 +52,12 @@ public class Controller {
 				System.arraycopy(threads[i].getDigits(), 0, sorted, i * threads[i].getDigits().length,
 						threads[i].getDigits().length);
 			}
-			for (int i = 0; i < sorted.length; ++i) {
-				System.out.print(sorted[i] + " ");
-			}
+			// for (int i = 0; i < sorted.length; ++i) {
+			// System.out.print(sorted[i] + " ");
+			// }
 			System.out.println("\n------------------------");
 			System.out.println("\nBenötigte Zeit in ms: \t" + (end - start) / 1000000.0);
+			System.out.println("\nBenötigte Zeit in ns: \t" + (end - start));
 			System.out.println("\nLänge vorher: " + unsorted.length + "\tLänge nachher: " + sorted.length);
 			Arrays.sort(unsorted);
 			if (checkNumbers(sorted)) {
